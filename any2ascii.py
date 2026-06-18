@@ -1,31 +1,36 @@
 from PIL import Image
-from numpy import array
+import numpy as np
 from palettes import PALETTES
 
-im_path = "test.jpeg"
-W = 50
-H = 50
-palette = "bars"
+im_path = "test2.jpg"
+MAX_W = 50 
+palette_name = "noir"
 
-im = Image.open(im_path)
-resizeed_im = im.resize((W, H))
-im_gray = resizeed_im.convert("L")
-im_array = array(im_gray)
-print(im_array)
-N = len(PALETTES[palette])
-rows = []
-for i in range(H):
-    row = ""
-    for j in range(W):
-        pixel_value = im_array[i][j]
-        char_index = int(pixel_value / 256 * N)
-        row += PALETTES[palette][char_index]
-        #row += PALETTES[palette][char_index]
-    rows.append(row)
+palette = PALETTES[palette_name]
+ramp = palette["ramp"]
+square = palette["square"]
+N = len(ramp)
 
-for row in rows:
-    print(row)
+im = Image.open(im_path).convert("L")
+orig_w, orig_h = im.size
 
-art = "\n".join(rows)
+cols = min(MAX_W, orig_w)
+rows = max(1, round(cols * orig_h / orig_w))
+
+im_resized = im.resize((cols, rows))
+pixels = np.array(im_resized)
+
+lines = []
+for r in range(rows):
+    line = []
+    for c in range(cols):
+        idx = min(N - 1, int(pixels[r, c]) * N // 256)
+        ch = ramp[idx]
+        line.append(ch if square else ch * 2)
+    lines.append("".join(line))
+
+art = "\n".join(lines)
+print(art)
+
 with open("art.txt", "w", encoding="utf-8") as f:
     f.write(art)
